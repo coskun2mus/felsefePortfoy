@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agora | Felsefe Sınıfı Portföyü & Düşünce Atölyesi</title>
+    <meta name="description" content="Arzu Hoca Felsefe Sınıfı öğrencilerinin felsefi düşünce ve makalelerinin yer aldığı sınıf portföyü.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark">
+
+    <!-- NAVIGATION HEADER -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <div class="brand">
+                <div class="brand-icon"><i class="fa-solid fa-feather-pointed"></i></div>
+                <div class="brand-text">
+                    <span class="brand-title">AGORA</span>
+                    <span class="brand-subtitle">Felsefe Düşünce Atölyesi</span>
+                </div>
+            </div>
+
+            <div class="nav-controls">
+                <button id="btn-theme-toggle" class="btn-icon" title="Tema Değiştir">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <button id="btn-open-submit" class="btn btn-primary">
+                    <i class="fa-solid fa-pen-nib"></i> <span>Yazı Gönder</span>
+                </button>
+                <button id="btn-open-admin" class="btn btn-outline">
+                    <i class="fa-solid fa-user-shield"></i> <span>Öğretmen Paneli</span>
+                    <span id="pending-badge" class="badge-count hidden">0</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- HERO / PHILOSOPHY QUOTE SECTION -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="hero-card">
+                <div class="quote-decoration"><i class="fa-solid fa-quote-left"></i></div>
+                <div class="quote-content">
+                    <p id="hero-quote-text" class="quote-text">"Sorgulanmamış yaşam, yaşanmaya değmez."</p>
+                    <span id="hero-quote-author" class="quote-author">— Sokrates</span>
+                </div>
+                <button id="btn-next-quote" class="btn-quote-refresh" title="Yeni Felsefi Söz">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="container main-content">
+        
+        <!-- SEARCH & FILTER SECTION -->
+        <section class="filter-section">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Felsefi makale, konu veya öğrenci adı ara...">
+            </div>
+
+            <div class="category-pills" id="category-pills">
+                <button class="pill active" data-category="all">Tümü</button>
+                <button class="pill" data-category="Varlık Felsefesi">Varlık (Ontoloji)</button>
+                <button class="pill" data-category="Bilgi Felsefesi">Bilgi (Epistemoloji)</button>
+                <button class="pill" data-category="Estetik">Estetik (Sanat)</button>
+                <button class="pill" data-category="Serbest Düşünce">Serbest Düşünce</button>
+            </div>
+        </section>
+
+        <!-- VIEW TOGGLE: PUBLIC GALLERY vs ADMIN PANEL -->
+        <div id="view-public" class="view-section active">
+            <div class="section-header">
+                <h2>Yayınlanan Öğrenci Çalışmaları</h2>
+                <span id="essay-count-tag" class="count-tag">0 Çalışma</span>
+            </div>
+
+            <!-- PUBLIC ESSAYS GALLERY GRID -->
+            <div id="essays-grid" class="essays-grid">
+                <!-- Dynamic Content via JS -->
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div id="empty-state-public" class="empty-state hidden">
+                <i class="fa-solid fa-scroll empty-icon"></i>
+                <h3>Henüz yayınlanmış bir yazı bulunmuyor</h3>
+                <p>İlk felsefe yazısını göndermek için yukarıdaki "Yazı Gönder" butonunu kullanabilirsiniz.</p>
+            </div>
+        </div>
+
+        <!-- ADMIN PANEL VIEW -->
+        <div id="view-admin" class="view-section hidden">
+            <div class="admin-header-bar">
+                <div class="admin-title-area">
+                    <h2><i class="fa-solid fa-user-check"></i> Arzu Hoca - Öğretmen Yönetim Paneli</h2>
+                    <p class="admin-subtitle">Öğrenci yazılarını inceleyin, onaylayın, düzeltmeler yapın (editörlük) ve revizyon geçmişini yönetin.</p>
+                </div>
+                <button id="btn-close-admin" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-arrow-left"></i> Portföye Dön
+                </button>
+            </div>
+
+            <!-- ADMIN TABS -->
+            <div class="admin-tabs">
+                <button class="tab-btn active" id="tab-btn-pending" data-tab="pending">
+                    <i class="fa-solid fa-clock-history"></i> Onay Bekleyenler 
+                    <span id="tab-pending-count" class="tab-badge">0</span>
+                </button>
+                <button class="tab-btn" id="tab-btn-approved" data-tab="approved">
+                    <i class="fa-solid fa-circle-check"></i> Yayınlananlar 
+                    <span id="tab-approved-count" class="tab-badge">0</span>
+                </button>
+            </div>
+
+            <!-- ADMIN PENDING LIST -->
+            <div id="admin-tab-pending" class="admin-tab-content active">
+                <div id="admin-pending-list" class="admin-list">
+                    <!-- Dynamic Pending Cards via JS -->
+                </div>
+                <div id="empty-state-pending" class="empty-state hidden">
+                    <i class="fa-solid fa-check-double empty-icon"></i>
+                    <h3>Onay bekleyen yazı yok</h3>
+                    <p>Öğrenciler tarafından gönderilen tüm yazılar incelendi.</p>
+                </div>
+            </div>
+
+            <!-- ADMIN APPROVED LIST -->
+            <div id="admin-tab-approved" class="admin-tab-content hidden">
+                <div id="admin-approved-list" class="admin-list">
+                    <!-- Dynamic Approved List via JS -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <p><i class="fa-solid fa-landmark"></i> Arzu Hoca Felsefe Sınıfı & Düşünce Atölyesi © 2026</p>
+            <p class="footer-subtext">"Düşünüyorum, öyleyse varım." — René Descartes</p>
+        </div>
+    </footer>
+
+    <!-- MODAL 1: STUDENT ESSAY SUBMISSION -->
+    <div id="modal-submit" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-feather"></i> Yeni Felsefe Yazısı Gönder</h3>
+                <button class="btn-close-modal" data-close="modal-submit"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-submit-essay" class="modal-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="student-name">Öğrenci Adı Soyadı *</label>
+                        <input type="text" id="student-name" required placeholder="Örn: Deniz Yılmaz">
+                    </div>
+                    <div class="form-group">
+                        <label for="student-class">Sınıf / Şube *</label>
+                        <input type="text" id="student-class" required placeholder="Örn: 11-A">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="essay-title">Yazı Başlığı *</label>
+                    <input type="text" id="essay-title" required placeholder="Örn: Özgür İrade Bir Yanılsama mıdır?">
+                </div>
+
+                <div class="form-group">
+                    <label for="essay-category">Felsefe Kategorisi *</label>
+                    <select id="essay-category" required>
+                        <option value="">Kategori Seçiniz...</option>
+                        <option value="Varlık Felsefesi">Varlık Felsefesi (Ontoloji)</option>
+                        <option value="Bilgi Felsefesi">Bilgi Felsefesi (Epistemoloji)</option>
+                        <option value="Estetik">Estetik (Sanat Felsefesi)</option>
+                        <option value="Serbest Düşünce">Serbest Düşünce / Deneme</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="essay-content">Felsefi Çalışma / Makale İçeriği *</label>
+                    <textarea id="essay-content" rows="8" required placeholder="Felsefi düşüncelerinizi, sorularınızı ve argümanlarınızı buraya detaylıca yazınız..."></textarea>
+                </div>
+
+                <div class="modal-info-box">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>Gönderdiğiniz yazı Arzu Hoca'nın onayından geçtikten sonra sınıf portföyünde yayınlanacaktır.</span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-close="modal-submit">İptal</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Onaya Gönder</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ESSAY READER WITH REVISIONS TABS -->
+    <div id="modal-reader" class="modal-overlay hidden">
+        <div class="modal-card modal-large">
+            <div class="modal-header">
+                <span id="reader-category-badge" class="category-badge">Kategori</span>
+                <button class="btn-close-modal" data-close="modal-reader"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- READER TABS -->
+            <div class="reader-tabs">
+                <button class="reader-tab-btn active" id="reader-tab-btn-content">
+                    <i class="fa-solid fa-book-open"></i> Makale Oku
+                </button>
+                <button class="reader-tab-btn" id="reader-tab-btn-revisions">
+                    <i class="fa-solid fa-history"></i> Revizyon Geçmişi 
+                    <span id="reader-revision-count" class="tab-badge">1</span>
+                </button>
+            </div>
+
+            <div class="reader-content">
+                <!-- TAB CONTENT 1: ACTUAL ESSAY -->
+                <div id="reader-tab-content" class="reader-tab-pane active">
+                    <h1 id="reader-title" class="reader-title">Yazı Başlığı</h1>
+                    <div class="reader-meta">
+                        <div class="author-info">
+                            <i class="fa-solid fa-user-pen"></i>
+                            <span id="reader-author">Öğrenci Adı</span> (<span id="reader-class">Sınıf</span>)
+                        </div>
+                        <div class="date-info">
+                            <i class="fa-regular fa-calendar"></i>
+                            <span id="reader-date">Tarih</span>
+                        </div>
+                    </div>
+                    <hr class="divider">
+                    <div id="reader-body" class="reader-body">
+                        <!-- Essay Body Text -->
+                    </div>
+                    <hr class="divider">
+                    <!-- VIRTUAL TEACHER REVIEWS -->
+                    <div id="reader-virtual-reviews" class="virtual-reviews-section">
+                        <!-- Dynamic Reviews via JS -->
+                    </div>
+                </div>
+
+                <!-- TAB CONTENT 2: REVISION HISTORY -->
+                <div id="reader-tab-revisions" class="reader-tab-pane hidden">
+                    <h3 class="revisions-sec-title">Gelişim ve Düzeltme Günlüğü</h3>
+                    <p class="revisions-sec-desc">Bu yazının ilk gönderilme anından itibaren geçirdiği tüm editörlük ve düzeltme aşamalarını aşağıdan inceleyebilirsiniz.</p>
+                    <div id="reader-revisions-timeline" class="revisions-timeline">
+                        <!-- Dynamic Revision List via JS -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-outline" data-close="modal-reader">Kapat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: TEACHER PIN CODE AUTH -->
+    <div id="modal-pin" class="modal-overlay hidden">
+        <div class="modal-card modal-small">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-lock"></i> Öğretmen Girişi</h3>
+                <button class="btn-close-modal" data-close="modal-pin"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-pin" class="modal-form">
+                <p class="pin-instruction">Yönetim paneline erişmek için lütfen öğretmen PIN kodunu giriniz.</p>
+                <div class="form-group">
+                    <input type="password" id="pin-input" maxlength="10" placeholder="PIN Kodu (Demo: 1234)" required autocomplete="off">
+                    <span id="pin-error" class="error-text hidden"><i class="fa-solid fa-triangle-exclamation"></i> Hatalı PIN kodu! Tekrar deneyiniz.</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-close="modal-pin">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-key"></i> Giriş Yap</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 4: TEACHER ESSAY EDITOR -->
+    <div id="modal-edit" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-pen"></i> Öğretmen Düzeltme Paneli</h3>
+                <button class="btn-close-modal" data-close="modal-edit"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="form-edit-essay" class="modal-form">
+                <input type="hidden" id="edit-essay-id">
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Öğrenci</label>
+                        <input type="text" id="edit-student-name" readonly class="input-readonly">
+                    </div>
+                    <div class="form-group">
+                        <label>Sınıf</label>
+                        <input type="text" id="edit-student-class" readonly class="input-readonly">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-essay-title">Yazı Başlığı</label>
+                    <input type="text" id="edit-essay-title" required placeholder="Başlığı güncelle...">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-essay-category">Kategori</label>
+                    <select id="edit-essay-category" required>
+                        <option value="Varlık Felsefesi">Varlık Felsefesi (Ontoloji)</option>
+                        <option value="Bilgi Felsefesi">Bilgi Felsefesi (Epistemoloji)</option>
+                        <option value="Estetik">Estetik (Sanat Felsefesi)</option>
+                        <option value="Serbest Düşünce">Serbest Düşünce / Deneme</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-essay-content">İçerik (Arzu Hoca Editörlüğü)</label>
+                    <textarea id="edit-essay-content" rows="10" required placeholder="Gerekli imla ve içerik düzeltmelerini buradan yapınız..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-essay-feedback">Öğretmen Geri Bildirimi / Düzeltme Notu *</label>
+                    <input type="text" id="edit-essay-feedback" required placeholder="Örn: İmla hataları giderildi, felsefi ifadeler akıcı hale getirildi.">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="edit-essay-evrim-reply">Dr. Evrim Yılmaz'a Cevap Yaz (Cevap Hakkı)</label>
+                        <textarea id="edit-essay-evrim-reply" rows="2" placeholder="Evrim Hoca'nın materyalist yorumuna cevabınız (isteğe bağlı)..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-essay-cemal-reply">Prof. Dr. Cemal Turgut'a Cevap Yaz (Cevap Hakkı)</label>
+                        <textarea id="edit-essay-cemal-reply" rows="2" placeholder="Cemal Hoca'nın dualist yorumuna cevabınız (isteğe bağlı)..."></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-info-box warning-box">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Düzeltmeyi kaydettiğinizde eski metin silinmez, okurlar için "Revizyon Geçmişi" kısmına otomatik eklenir.</span>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" data-close="modal-edit">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Değişiklikleri Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
