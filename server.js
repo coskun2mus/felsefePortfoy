@@ -2,9 +2,20 @@ const express = require('express');
 const dotenv = require('dotenv');
 const path = require('path');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const mongoose = require('mongoose');
+const Essay = require('./models/Essay');
 
 // Load environment variables
 dotenv.config();
+
+// Connect to MongoDB
+if (process.env.MONGODB_URI) {
+    mongoose.connect(process.env.MONGODB_URI)
+      .then(() => console.log('MongoDB bağlantısı başarılı.'))
+      .catch((err) => console.error('MongoDB bağlantı hatası:', err));
+} else {
+    console.warn('UYARI: MONGODB_URI ortam değişkeni bulunamadı. Veritabanı bağlantısı kurulamıyor.');
+}
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -14,6 +25,61 @@ app.use(express.json());
 
 // Serve static files (HTML, CSS, JS) from the root folder
 app.use(express.static(path.join(__dirname)));
+
+// --- ESSAY API ROUTES ---
+
+// Get all essays
+app.get('/api/essays', async (req, res) => {
+    try {
+        const essays = await Essay.find().sort({ createdAt: -1 });
+        res.json(essays);
+    } catch (err) {
+        console.error('Essays fetch error:', err);
+        res.status(500).json({ error: 'Makaleler alınırken bir hata oluştu.' });
+    }
+});
+
+// Create a new essay
+app.post('/api/essays', async (req, res) => {
+    try {
+        const newEssay = new Essay(req.body);
+        const savedEssay = await newEssay.save();
+        res.status(201).json(savedEssay);
+    } catch (err) {
+        console.error('Essay save error:', err);
+        res.status(500).json({ error: 'Makale kaydedilirken bir hata oluştu.', details: err.message });
+    }
+});
+
+// Update an essay
+app.put('/api/essays/:id', async (req, res) => {
+    try {
+        const updatedEssay = await Essay.findOneAndUpdate(
+            { id: req.params.id }, 
+            req.body, 
+            { new: true }
+        );
+        if (!updatedEssay) return res.status(404).json({ error: 'Makale bulunamadı.' });
+        res.json(updatedEssay);
+    } catch (err) {
+        console.error('Essay update error:', err);
+        res.status(500).json({ error: 'Makale güncellenirken bir hata oluştu.' });
+    }
+});
+
+// Delete an essay
+app.delete('/api/essays/:id', async (req, res) => {
+    try {
+        const deletedEssay = await Essay.findOneAndDelete({ id: req.params.id });
+        if (!deletedEssay) return res.status(404).json({ error: 'Makale bulunamadı.' });
+        res.json({ message: 'Makale başarıyla silindi.' });
+    } catch (err) {
+        console.error('Essay delete error:', err);
+        res.status(500).json({ error: 'Makale silinirken bir hata oluştu.' });
+    }
+});
+
+// --- EVALUATION API ROUTE ---
 
 // Route for evaluation API using Gemini
 app.post('/api/evaluate', async (req, res) => {
