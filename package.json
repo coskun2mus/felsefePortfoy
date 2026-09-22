@@ -2,10 +2,20 @@
   "name": "felsefe_portfoyu",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "server.js",
+  "bin": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build:exe": "pkg . --targets node18-win-x64 --output FelsefePortfoy.exe"
+  },
+  "pkg": {
+    "assets": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "models/**/*"
+    ]
   },
   "keywords": [],
   "author": "",

@@ -9,13 +9,11 @@ const Essay = require('./models/Essay');
 dotenv.config();
 
 // Connect to MongoDB
-if (process.env.MONGODB_URI) {
-    mongoose.connect(process.env.MONGODB_URI)
-      .then(() => console.log('MongoDB bağlantısı başarılı.'))
-      .catch((err) => console.error('MongoDB bağlantı hatası:', err));
-} else {
-    console.warn('UYARI: MONGODB_URI ortam değişkeni bulunamadı. Veritabanı bağlantısı kurulamıyor.');
-}
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mryguzel_db_user:vXKzWXqtgBTs5Fu8@felsefeportfoy.9guxx3v.mongodb.net/?appName=FelsefePortfoy';
+
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('MongoDB bağlantısı başarılı.'))
+  .catch((err) => console.error('MongoDB bağlantı hatası:', err));
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -23,7 +21,8 @@ const PORT = process.env.PORT || 8080;
 // Middleware for parsing JSON requests
 app.use(express.json());
 
-// Serve static files (HTML, CSS, JS) from the root folder
+// Serve static files (HTML, CSS, JS) from the root folder and packaged snapshot
+app.use(express.static(process.cwd()));
 app.use(express.static(path.join(__dirname)));
 
 // --- ESSAY API ROUTES ---
@@ -162,4 +161,10 @@ app.listen(PORT, () => {
     console.log(` Model: ${process.env.GEMINI_MODEL || 'gemini-2.0-flash'}`);
     console.log(` API Anahtarı Durumu: ${process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'your_gemini_api_key_here' ? 'Aktif' : 'Eksik (Lütfen .env dosyasını güncelleyin)'}`);
     console.log(`==================================================`);
+
+    // Otomatik olarak tarayıcıyı aç
+    const { exec } = require('child_process');
+    if (process.platform === 'win32') {
+        exec(`start http://localhost:${PORT}`);
+    }
 });
