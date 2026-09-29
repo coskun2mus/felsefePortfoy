@@ -1218,4 +1218,67 @@ function escapeHtml(str) {
 }
 
 // Start Application
-document.addEventListener('DOMContentLoaded', initApp);
+document.addEventListener('DOMContentLoaded', () => {
+    initApp();
+    setupPwaInstallation();
+});
+
+// --- PWA (PROGRESSIVE WEB APP) SERVICE WORKER & INSTALLATION ---
+function setupPwaInstallation() {
+    // 1. Service Worker Kaydı
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((reg) => {
+                    console.log('[PWA] Service Worker aktif:', reg.scope);
+                })
+                .catch((err) => {
+                    console.warn('[PWA] Service Worker kaydedilemedi:', err);
+                });
+        });
+    }
+
+    // 2. Yükleme Bildirimi (beforeinstallprompt - Android / Chrome)
+    let deferredPrompt = null;
+    const btnInstall = document.getElementById('btn-install-pwa');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (btnInstall) {
+            btnInstall.classList.remove('hidden');
+        }
+    });
+
+    // iOS Safari Tespiti
+    const isIos = () => /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+    const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || ('standalone' in window.navigator && window.navigator.standalone);
+
+    if (isIos() && !isStandalone() && btnInstall) {
+        btnInstall.classList.remove('hidden');
+    }
+
+    if (btnInstall) {
+        btnInstall.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    showToast('Agora Felsefe cihazınıza ekleniyor! ✨', 'success');
+                }
+                deferredPrompt = null;
+                btnInstall.classList.add('hidden');
+            } else if (isIos()) {
+                showToast('iPhone/iPad için: Alttaki "Paylaş" simgesine dokunup "Ana Ekrana Ekle"yi seçin. 📲', 'info');
+            } else {
+                showToast('Tarayıcınızın menüsünden "Uygulamayı Yükle" veya "Ana Ekrana Ekle"yi seçebilirsiniz. 📲', 'info');
+            }
+        });
+    }
+
+    window.addEventListener('appinstalled', () => {
+        console.log('[PWA] Uygulama başarıyla kuruldu.');
+        if (btnInstall) btnInstall.classList.add('hidden');
+        showToast('Agora Felsefe Portföyü başarıyla yüklendi! 🎉', 'success');
+    });
+}

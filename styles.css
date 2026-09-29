@@ -203,6 +203,18 @@ a {
     color: var(--accent-gold);
 }
 
+#btn-install-pwa {
+    border-color: rgba(251, 191, 36, 0.4);
+    color: var(--accent-gold);
+    background: rgba(251, 191, 36, 0.08);
+}
+
+#btn-install-pwa:hover {
+    background: var(--accent-gold);
+    color: #0b0f19;
+    box-shadow: 0 0 15px var(--accent-glow);
+}
+
 .btn-sm {
     padding: 6px 14px;
     font-size: 13px;

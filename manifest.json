@@ -1,0 +1,32 @@
+{
+  "name": "Agora | Felsefe Portföyü & Düşünce Atölyesi",
+  "short_name": "Agora Felsefe",
+  "description": "Lise felsefe sınıfı düşünce atölyesi, öğrenci makale portföyü ve sanal zümre kurulu platformu.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0f19",
+  "theme_color": "#0b0f19",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["education", "philosophy"],
+  "lang": "tr"
+}
