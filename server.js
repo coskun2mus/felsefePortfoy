@@ -18,6 +18,17 @@ mongoose.connect(MONGODB_URI)
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+// CORS Middleware to allow requests from Live Server (5500) or other origins
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 // Middleware for parsing JSON requests
 app.use(express.json());
 

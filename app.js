@@ -133,10 +133,15 @@ const INITIAL_ESSAYS = [
     }
 ];
 
+// --- API CONFIGURATION ---
+const API_BASE = (window.location.protocol === 'file:' || (window.location.port && window.location.port !== '8080')) 
+    ? 'http://localhost:8080' 
+    : '';
+
 // --- VIRTUAL TEACHERS AI REVIEW GENERATOR (GEMINI INTEGRATION) ---
 async function fetchVirtualTeacherReviews(category, content) {
     try {
-        const response = await fetch('/api/evaluate', {
+        const response = await fetch(`${API_BASE}/api/evaluate`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -144,12 +149,12 @@ async function fetchVirtualTeacherReviews(category, content) {
             body: JSON.stringify({ category, content })
         });
         if (!response.ok) {
-            const errData = await response.json();
+            const errData = await response.json().catch(() => ({}));
             throw new Error(errData.error || 'Sunucudan hata döndü.');
         }
         return await response.json();
     } catch (error) {
-        console.error('Yapay Zeka Yorumu Alınamadı:', error);
+        console.warn('Yapay Zeka Yorumu Alınamadı:', error);
         showToast('Yapay zeka yorumu alınamadı, yerel şablonlar kullanılıyor.', 'info');
         return generateVirtualTeacherReviewsStatic(category, content);
     }
@@ -251,31 +256,47 @@ function initApp() {
 }
 
 // --- LOCAL STORAGE HELPERS ---
+// --- LOCAL STORAGE & API HELPERS ---
 async function loadEssaysFromStorage() {
+    let loadedFromApi = false;
     try {
-        const response = await fetch('/api/essays');
+        const response = await fetch(`${API_BASE}/api/essays`);
         if (response.ok) {
             essays = await response.json();
             if (essays.length === 0) {
                 // Seed initial essays
                 for (const essay of INITIAL_ESSAYS) {
-                    await fetch('/api/essays', {
+                    await fetch(`${API_BASE}/api/essays`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(essay)
                     });
                 }
-                const res2 = await fetch('/api/essays');
-                essays = await res2.json();
+                const res2 = await fetch(`${API_BASE}/api/essays`);
+                if (res2.ok) essays = await res2.json();
             }
+            loadedFromApi = true;
+            localStorage.setItem('agora_essays', JSON.stringify(essays));
         } else {
-            console.error('Failed to load essays from server.');
-            essays = INITIAL_ESSAYS;
+            console.warn('Sunucudan makaleler alınamadı, yerel kayıt kontrol ediliyor.');
         }
     } catch (e) {
-        console.error('Error fetching essays:', e);
-        essays = INITIAL_ESSAYS;
+        console.warn('Sunucu çevrimdışı veya erişilemedi, yerel hafızaya geçiliyor:', e);
     }
+
+    if (!loadedFromApi) {
+        const local = localStorage.getItem('agora_essays');
+        if (local) {
+            try {
+                essays = JSON.parse(local);
+            } catch (err) {
+                essays = INITIAL_ESSAYS;
+            }
+        } else {
+            essays = INITIAL_ESSAYS;
+        }
+    }
+
     updatePendingBadge();
     renderPublicGallery();
     if (!elements.viewAdmin.classList.contains('hidden')) {
@@ -284,7 +305,11 @@ async function loadEssaysFromStorage() {
 }
 
 function saveEssaysToStorage() {
-    // Deprecated. API requests are used directly now.
+    try {
+        localStorage.setItem('agora_essays', JSON.stringify(essays));
+    } catch (e) {
+        console.error('localStorage save error:', e);
+    }
 }
 
 function loadThemeFromStorage() {
@@ -437,11 +462,11 @@ function openEssayReader(essay) {
     // Set up Virtual Teacher reviews
     if (!essay.virtualReviews) {
         essay.virtualReviews = generateVirtualTeacherReviewsStatic(essay.category, essay.content);
-        fetch(`/api/essays/${essay.id}`, {
+        fetch(`${API_BASE}/api/essays/${essay.id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(essay)
-        });
+        }).catch(() => {});
     }
     
     if (elements.readerVirtualReviews) {
@@ -614,18 +639,34 @@ async function handleEssaySubmit(e) {
             ]
         };
 
-        await fetch('/api/essays', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(newEssay)
-        });
-        await loadEssaysFromStorage();
+        let apiSaved = false;
+        try {
+            const apiRes = await fetch(`${API_BASE}/api/essays`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newEssay)
+            });
+            if (apiRes.ok) {
+                apiSaved = true;
+                await loadEssaysFromStorage();
+                showToast('Yazınız başarıyla Arzu Hoca\'nın onayına gönderildi! ✨', 'success');
+            }
+        } catch (fetchErr) {
+            console.warn('Sunucuya kaydedilemedi, yerel hafızaya kaydediliyor:', fetchErr);
+        }
+
+        if (!apiSaved) {
+            essays.unshift(newEssay);
+            saveEssaysToStorage();
+            updatePendingBadge();
+            renderPublicGallery();
+            showToast('Yazınız yerel hafızaya kaydedildi (Sunucu çevrimdışı). ✨', 'info');
+        }
         
         elements.formSubmitEssay.reset();
         closeModal(elements.modalSubmit);
-        
-        showToast('Yazınız başarıyla Arzu Hoca\'nın onayına gönderildi! ✨', 'success');
     } catch (err) {
+        console.error('Yazı gönderme hatası:', err);
         showToast('Yazı gönderilirken bir sorun oluştu.', 'error');
     } finally {
         // Reset button states
@@ -863,13 +904,16 @@ function createAdminItemCard(essay, isPending) {
                     targetEssay.teacherReply.cemalReply = text;
                 }
 
-                fetch(`/api/essays/${essayId}`, {
+                fetch(`${API_BASE}/api/essays/${essayId}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(targetEssay)
                 }).then(() => {
                     loadEssaysFromStorage();
                     showToast('Öğretmen cevabı başarıyla güncellendi!', 'success');
+                }).catch(() => {
+                    saveEssaysToStorage();
+                    showToast('Öğretmen cevabı yerel olarak kaydedildi!', 'info');
                 });
             }
         }
@@ -882,20 +926,33 @@ async function approveEssay(id) {
     const essay = essays.find(e => e.id === id);
     if (essay) {
         essay.status = 'approved';
-        await fetch(`/api/essays/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(essay)
-        });
-        await loadEssaysFromStorage();
+        try {
+            await fetch(`${API_BASE}/api/essays/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(essay)
+            });
+            await loadEssaysFromStorage();
+        } catch (e) {
+            saveEssaysToStorage();
+            updatePendingBadge();
+            renderAdminLists();
+        }
         showToast(`"${essay.title}" onaylandı ve portföyde yayınlandı!`, 'success');
     }
 }
 
 async function deleteEssay(id) {
     if (confirm('Bu çalışmayı ve tüm revizyon geçmişini tamamen silmek istediğinizden emin misiniz?')) {
-        await fetch(`/api/essays/${id}`, { method: 'DELETE' });
-        await loadEssaysFromStorage();
+        try {
+            await fetch(`${API_BASE}/api/essays/${id}`, { method: 'DELETE' });
+            await loadEssaysFromStorage();
+        } catch (e) {
+            essays = essays.filter(item => item.id !== id);
+            saveEssaysToStorage();
+            updatePendingBadge();
+            renderAdminLists();
+        }
         showToast('Yazı tamamen silindi.', 'info');
     }
 }
@@ -1005,12 +1062,25 @@ async function handleEssayEditSave(e) {
                 cemalReply: cemalReply
             };
 
-            await fetch(`/api/essays/${essay.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(essay)
-            });
-            await loadEssaysFromStorage();
+            let editSaved = false;
+            try {
+                const putRes = await fetch(`${API_BASE}/api/essays/${essay.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(essay)
+                });
+                if (putRes.ok) {
+                    editSaved = true;
+                    await loadEssaysFromStorage();
+                }
+            } catch (err) {
+                console.warn('API güncelleme hatası, yerel hafızaya kaydediliyor:', err);
+            }
+
+            if (!editSaved) {
+                saveEssaysToStorage();
+                renderAdminLists();
+            }
 
             showToast('Değişiklikler ve öğretmen cevapları başarıyla kaydedildi!', 'success');
             elements.formEditEssay.reset();

@@ -9,6 +9,14 @@ echo.
 
 cd /d "%~dp0"
 
+where node >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [HATA] Node.js kurulu görünmüyor!
+    echo Lütfen https://nodejs.org adresinden Node.js kurun.
+    pause
+    exit /b 1
+)
+
 if not exist node_modules (
     echo [1/3] İlk kurulum yapılıyor, kütüphaneler yükleniyor...
     call npm install
@@ -18,7 +26,7 @@ if not exist node_modules (
 
 if not exist .env (
     if exist .env.example (
-        echo [2/3] Ayar dosyası oluşturuluyor...
+        echo [2/3] Ayar dosyası oluşturuluyor (.env)...
         copy .env.example .env >nul
     )
 ) else (
