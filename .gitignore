@@ -13,6 +13,3 @@ atlas-credentials.env
 *.log
 .DS_Store
 Thumbs.db
-
-# Executables
-*.exe
